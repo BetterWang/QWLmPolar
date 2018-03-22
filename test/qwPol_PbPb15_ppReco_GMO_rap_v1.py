@@ -264,6 +264,7 @@ process.CaloTree = cms.EDAnalyzer('QWDTagTreeMaker',
 process.ana = cms.Path(
         process.eventSelection
         * process.centralityBins
+        * process.NoffFilter60
         * process.QWV0EventLambda
         * process.caloQ
 	* process.LmTree
