@@ -102,38 +102,38 @@ process.QWV0EventLambda = cms.EDProducer('QWV0VectProducer'
 # HF g 3.0 - 5.0 = a+b+c+d
 
 process.CaloQ1a = cms.EDProducer('QWCaloQProducer',
-        caloSrc = cms.untracked.InputTag('towerMaker')
+        caloSrc = cms.untracked.InputTag('towerMaker'),
         etaMin = cms.untracked.double(3.0),
         etaMax = cms.untracked.double(3.5),
         N = cms.untracked.int32(1)
         )
 
-process.CaloQ1b = process.CaloQ1ap(
+process.CaloQ1b = process.CaloQ1a.clone(
         etaMin = cms.untracked.double(3.5),
         etaMax = cms.untracked.double(4.0),
         )
 
-process.CaloQ1c = process.CaloQ1ap(
+process.CaloQ1c = process.CaloQ1a.clone(
         etaMin = cms.untracked.double(4.0),
         etaMax = cms.untracked.double(4.5),
         )
 
-process.CaloQ1d = process.CaloQ1ap(
+process.CaloQ1d = process.CaloQ1a.clone(
         etaMin = cms.untracked.double(4.5),
         etaMax = cms.untracked.double(5.0),
         )
 
-process.CaloQ1e = process.CaloQ1ap(
+process.CaloQ1e = process.CaloQ1a.clone(
         etaMin = cms.untracked.double(3.0),
         etaMax = cms.untracked.double(4.0),
         )
 
-process.CaloQ1f = process.CaloQ1ap(
+process.CaloQ1f = process.CaloQ1a.clone(
         etaMin = cms.untracked.double(4.0),
         etaMax = cms.untracked.double(5.0),
         )
 
-process.CaloQ1g = process.CaloQ1ap(
+process.CaloQ1g = process.CaloQ1a.clone(
         etaMin = cms.untracked.double(3.0),
         etaMax = cms.untracked.double(5.0),
         )
@@ -142,6 +142,9 @@ process.CaloQ2a = process.CaloQ1a.clone( N = cms.untracked.int32(2) )
 process.CaloQ2b = process.CaloQ1b.clone( N = cms.untracked.int32(2) )
 process.CaloQ2c = process.CaloQ1c.clone( N = cms.untracked.int32(2) )
 process.CaloQ2d = process.CaloQ1d.clone( N = cms.untracked.int32(2) )
+process.CaloQ2e = process.CaloQ1e.clone( N = cms.untracked.int32(2) )
+process.CaloQ2f = process.CaloQ1f.clone( N = cms.untracked.int32(2) )
+process.CaloQ2g = process.CaloQ1g.clone( N = cms.untracked.int32(2) )
 
 process.caloQ = cms.Sequence( process.CaloQ1a + process.CaloQ1b + process.CaloQ1c + process.CaloQ1d + process.CaloQ1e + process.CaloQ1f + process.CaloQ1g
         + process.CaloQ2a + process.CaloQ2b + process.CaloQ2c + process.CaloQ2d + process.CaloQ2e + process.CaloQ2f + process.CaloQ2g
@@ -156,7 +159,7 @@ process.LmTree = cms.EDAnalyzer('QWTreeMaker',
         vTag = cms.untracked.vstring('phi', 'eta', 'rapidity', 'pt', 'mass', 'weight', 'pdgId', 'pPhiCM', 'nPhiCM')
         )
 
-process.CaloTree = cms.EDAnalyzer('QWDTreeMaker',
+process.CaloTree = cms.EDAnalyzer('QWDTagTreeMaker',
         vTag = cms.untracked.VInputTag(
             cms.untracked.InputTag('CaloQ1a', 'arg'),
             cms.untracked.InputTag('CaloQ1a', 'argp'),
