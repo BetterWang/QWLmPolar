@@ -55,7 +55,7 @@ process.NoffFilter60 = process.centralityFilter.clone(
         selectedBins = cms.vint32(
             *range(60, 180)
             ),
-        BinLabel = cms.InputTag("Noff")
+        BinLabel = cms.InputTag("centralityBins")
         )
 
 process.eventSelection = cms.Sequence(
@@ -153,6 +153,9 @@ process.caloQ = cms.Sequence( process.CaloQ1a + process.CaloQ1b + process.CaloQ1
 
 process.load('PbPb_HIMB5_ppReco_eff')
 
+process.dcentralityBins = cms.EDProducer('QWInt2Double',
+		src = cms.untracked.InputTag('centralityBins')
+		)
 
 process.LmTree = cms.EDAnalyzer('QWTreeMaker',
         src = cms.untracked.InputTag('QWV0EventLambda'),
@@ -258,12 +261,15 @@ process.CaloTree = cms.EDAnalyzer('QWDTagTreeMaker',
             cms.untracked.InputTag('CaloQ2g', 'abs'),
             cms.untracked.InputTag('CaloQ2g', 'absp'),
             cms.untracked.InputTag('CaloQ2g', 'absm'),
+
+            cms.untracked.InputTag('dcentralityBins'),
             )
         )
 
 process.ana = cms.Path(
         process.eventSelection
         * process.centralityBins
+        * process.dcentralityBins
         * process.NoffFilter60
         * process.QWV0EventLambda
         * process.caloQ
