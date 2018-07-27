@@ -19,11 +19,17 @@ QWLmPolar : public edm::EDAnalyzer {
 	public:
 		explicit QWLmPolar(const edm::ParameterSet&);
 		~QWLmPolar();
+		static void fillDescriptions(edm::ConfigurationDescriptions& descriptions) {};
 
 	private:
-		virtual void beginJob() override;
-		virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
-		virtual void endJob() override;
+		virtual void beginJob();
+		virtual void analyze(const edm::Event&, const edm::EventSetup&);
+		virtual void endJob();
+
+		virtual void beginRun(edm::Run const&, edm::EventSetup const&) {};
+		virtual void endRun(edm::Run const&, edm::EventSetup const&) {};
+		virtual void beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) {};
+		virtual void endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) {};
 
 	/////////////
 		edm::InputTag		centralityTag_;
@@ -46,13 +52,17 @@ QWLmPolar : public edm::EDAnalyzer {
 
 
 QWLmPolar::QWLmPolar(const edm::ParameterSet& iConfig):
-	centralityTag_( iConfig.getUntrackedParameter<edm::InputTag>("centrality") )
+	centralityTag_( iConfig.getUntrackedParameter<edm::InputTag>("centrality") ),
+	pdgId_( iConfig.getUntrackedParameter<edm::InputTag>("pdgId") ),
+	pPhiCM_( iConfig.getUntrackedParameter<edm::InputTag>("pPhiCM") ),
+	nPhiCM_( iConfig.getUntrackedParameter<edm::InputTag>("nPhiCM") )
+
 {
         consumes<int>(centralityTag_);
 
 	edm::Service<TFileService> fs;
 	trV = fs->make<TTree>("trV", "trV");
-	trV->Branch("Noff", &gNoff, "Noff/I");
+	trV->Branch("Noff", &Noff, "Noff/I");
 	trV->Branch("NV0", &gV0, "gV0/I");
 
 	trV->Branch("v1LmLm",		&v1LmLm);
@@ -78,9 +88,12 @@ QWLmPolar::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 	iEvent.getByLabel(centralityTag_,ch);
 	Noff = *ch;
 
-	vLmLm.clear();
-	vLmLmBar.clear();
-	vLmBarLmBar.clear();
+	v1LmLm.clear();
+	v1LmLmBar.clear();
+	v1LmBarLmBar.clear();
+	v2LmLm.clear();
+	v2LmLmBar.clear();
+	v2LmBarLmBar.clear();
 
 	edm::Handle<std::vector<double>> hpPhiCM;
 	edm::Handle<std::vector<double>> hnPhiCM;
