@@ -13,23 +13,20 @@
 #include "TTree.h"
 #include "TH1.h"
 
+#include <iostream>
+
 
 class
 QWLmPolar : public edm::EDAnalyzer {
 	public:
 		explicit QWLmPolar(const edm::ParameterSet&);
 		~QWLmPolar();
-		static void fillDescriptions(edm::ConfigurationDescriptions& descriptions) {};
 
 	private:
-		virtual void beginJob();
-		virtual void analyze(const edm::Event&, const edm::EventSetup&);
-		virtual void endJob();
+		virtual void beginJob() override {};
+		virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
+		virtual void endJob() override {};
 
-		virtual void beginRun(edm::Run const&, edm::EventSetup const&) {};
-		virtual void endRun(edm::Run const&, edm::EventSetup const&) {};
-		virtual void beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) {};
-		virtual void endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) {};
 
 	/////////////
 		edm::InputTag		centralityTag_;
@@ -56,9 +53,11 @@ QWLmPolar::QWLmPolar(const edm::ParameterSet& iConfig):
 	pdgId_( iConfig.getUntrackedParameter<edm::InputTag>("pdgId") ),
 	pPhiCM_( iConfig.getUntrackedParameter<edm::InputTag>("pPhiCM") ),
 	nPhiCM_( iConfig.getUntrackedParameter<edm::InputTag>("nPhiCM") )
-
 {
-        consumes<int>(centralityTag_);
+	consumes<int>(centralityTag_);
+	consumes<std::vector<double>>(pdgId_);
+	consumes<std::vector<double>>(pPhiCM_);
+	consumes<std::vector<double>>(nPhiCM_);
 
 	edm::Service<TFileService> fs;
 	trV = fs->make<TTree>("trV", "trV");
@@ -111,28 +110,32 @@ QWLmPolar::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
 			if ( ( (*hpdgId)[i] == 3122 ) and ( (*hpdgId)[j] == 3122 ) ) {
 				// Lm + Lm
-				v1LmLm.emplace_back(ipPhi - jpPhi);
-				v2LmLm.emplace_back(2*(ipPhi - jpPhi));
-			} else
+				v1LmLm.emplace_back(cos(ipPhi - jpPhi));
+				v2LmLm.emplace_back(cos(2*(ipPhi - jpPhi)));
+			}
 			if ( ( (*hpdgId)[i] == -3122 ) and ( (*hpdgId)[j] == -3122 ) ) {
 				// LmBar + LmBar
-				v1LmLm.emplace_back(inPhi - jnPhi);
-				v2LmLm.emplace_back(2*(inPhi - jnPhi));
-			} else
+				v1LmBarLmBar.emplace_back(cos(inPhi - jnPhi));
+				v2LmBarLmBar.emplace_back(cos(2*(inPhi - jnPhi)));
+			}
 			if ( ( (*hpdgId)[i] == 3122 ) and ( (*hpdgId)[j] == -3122 ) ) {
 				// Lm + LmBar
-				v1LmLm.emplace_back(ipPhi - jnPhi);
-				v2LmLm.emplace_back(2*(ipPhi - jnPhi));
-			} else
+				v1LmLmBar.emplace_back(cos(ipPhi - jnPhi));
+				v2LmLmBar.emplace_back(cos(2*(ipPhi - jnPhi)));
+			}
 			if ( ( (*hpdgId)[i] == -3122 ) and ( (*hpdgId)[j] == 3122 ) ) {
 				// LmBar + Lm
-				v1LmLm.emplace_back(inPhi - jpPhi);
-				v2LmLm.emplace_back(2*(inPhi - jpPhi));
+				v1LmLmBar.emplace_back(cos(-inPhi+jpPhi));
+				v2LmLmBar.emplace_back(cos(2*(-inPhi+jpPhi)));
 			}
 		}
 	}
 
 	trV->Fill();
+}
+
+QWLmPolar::~QWLmPolar()
+{
 }
 
 DEFINE_FWK_MODULE(QWLmPolar);

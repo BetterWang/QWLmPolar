@@ -3,4 +3,3 @@
 <use name="FWCore/ParameterSet"/>
 <flags EDM_PLUGIN="1"/>
 <use name="CommonTools/UtilAlgos"/>
-<use name="CommonTools/UtilAlgos"/>
