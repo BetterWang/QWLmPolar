@@ -27,24 +27,38 @@ QWLmPolar : public edm::EDAnalyzer {
 		virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
 		virtual void endJob() override {};
 
+	/////////////
+		typedef std::pair<int, double>	PidPhi;  // mLm
+		typedef std::vector<PidPhi>	VPidPhi; // evt
+		typedef std::vector<VPidPhi>	VVPidPhi;
+		std::vector<VVPidPhi*>		mixed_;
 
 	/////////////
 		edm::InputTag		centralityTag_;
 		edm::InputTag		pdgId_;
 		edm::InputTag		pPhiCM_;
 		edm::InputTag		nPhiCM_;
+		std::vector<int>	mixNoffBins_;
+		int			Nmix_;
 
 		TTree*			trV;
 		std::vector<double>	v1LmLm;
 		std::vector<double>	v1LmBarLmBar;
 		std::vector<double>	v1LmLmBar;
+		std::vector<double>	m1LmLm;
+		std::vector<double>	m1LmBarLmBar;
+		std::vector<double>	m1LmLmBar;
 
 		std::vector<double>	v2LmLm;
 		std::vector<double>	v2LmBarLmBar;
 		std::vector<double>	v2LmLmBar;
+		std::vector<double>	m2LmLm;
+		std::vector<double>	m2LmBarLmBar;
+		std::vector<double>	m2LmLmBar;
 
 		int			Noff;
 		int			gV0;
+
 };
 
 
@@ -52,7 +66,9 @@ QWLmPolar::QWLmPolar(const edm::ParameterSet& iConfig):
 	centralityTag_( iConfig.getUntrackedParameter<edm::InputTag>("centrality") ),
 	pdgId_( iConfig.getUntrackedParameter<edm::InputTag>("pdgId") ),
 	pPhiCM_( iConfig.getUntrackedParameter<edm::InputTag>("pPhiCM") ),
-	nPhiCM_( iConfig.getUntrackedParameter<edm::InputTag>("nPhiCM") )
+	nPhiCM_( iConfig.getUntrackedParameter<edm::InputTag>("nPhiCM") ),
+	mixNoffBins_( iConfig.getUntrackedParameter<std::vector<int>>("mixNoffBins") ),
+	Nmix_( iConfig.getUntrackedParameter<int>("Nmix") )
 {
 	consumes<int>(centralityTag_);
 	consumes<std::vector<double>>(pdgId_);
@@ -67,10 +83,20 @@ QWLmPolar::QWLmPolar(const edm::ParameterSet& iConfig):
 	trV->Branch("v1LmLm",		&v1LmLm);
 	trV->Branch("v1LmBarLmBar",	&v1LmBarLmBar);
 	trV->Branch("v1LmLmBar",	&v1LmLmBar);
+	trV->Branch("m1LmLm",		&m1LmLm);
+	trV->Branch("m1LmBarLmBar",	&m1LmBarLmBar);
+	trV->Branch("m1LmLmBar",	&m1LmLmBar);
 
 	trV->Branch("v2LmLm",		&v2LmLm);
 	trV->Branch("v2LmBarLmBar",	&v2LmBarLmBar);
 	trV->Branch("v2LmLmBar",	&v2LmLmBar);
+	trV->Branch("m2LmLm",		&m2LmLm);
+	trV->Branch("m2LmBarLmBar",	&m2LmBarLmBar);
+	trV->Branch("m2LmLmBar",	&m2LmLmBar);
+
+	for ( int i = 0; i < mixNoffBins_.size(); i++ ) {
+		mixed_.push_back(new VVPidPhi);
+	}
 }
 
 void
@@ -90,9 +116,16 @@ QWLmPolar::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 	v1LmLm.clear();
 	v1LmLmBar.clear();
 	v1LmBarLmBar.clear();
+	m1LmLm.clear();
+	m1LmLmBar.clear();
+	m1LmBarLmBar.clear();
+
 	v2LmLm.clear();
 	v2LmLmBar.clear();
 	v2LmBarLmBar.clear();
+	m2LmLm.clear();
+	m2LmLmBar.clear();
+	m2LmBarLmBar.clear();
 
 	edm::Handle<std::vector<double>> hpPhiCM;
 	edm::Handle<std::vector<double>> hnPhiCM;
@@ -129,6 +162,51 @@ QWLmPolar::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 				v2LmLmBar.emplace_back(cos(2*(-inPhi+jpPhi)));
 			}
 		}
+	}
+
+	VPidPhi	evtLm;
+	for ( int i = 0; i < gV0; i++ ) {
+		double ipPhi = (*hpPhiCM)[i];
+		double inPhi = (*hnPhiCM)[i];
+		int Pid = (*hpdgId)[i];
+		double Phi = Pid>0?ipPhi:inPhi;
+		PidPhi lm(Pid, Phi);
+		evtLm.push_back(lm);
+	}
+
+	// do mixing
+	int centBin = 0;
+	while ( mixNoffBins_[centBin+1] <= Noff ) centBin++;
+
+	for ( int i = 0; i < gV0; i++ ) {
+		double ipPhi = (*hpPhiCM)[i];
+		double inPhi = (*hnPhiCM)[i];
+		int Pid = (*hpdgId)[i];
+		double Phi = Pid>0?ipPhi:inPhi;
+
+		for ( auto&& evt : *(mixed_[centBin]) ) {
+			for ( auto&& mLm : evt ) {
+				if ( ( Pid == 3122 ) and (mLm.first == 3122) ) {
+					m1LmLm.emplace_back( cos(Phi - mLm.second) );
+					m2LmLm.emplace_back( cos(2*(Phi - mLm.second)) );
+				} else if ( ( Pid == 3122 ) and (mLm.first == -3122) ) {
+					m1LmLmBar.emplace_back( cos(Phi - mLm.second) );
+					m2LmLmBar.emplace_back( cos(2*(Phi - mLm.second)) );
+				} else if ( ( Pid == -3122 ) and (mLm.first == 3122) ) {
+					m1LmLmBar.emplace_back( cos(Phi - mLm.second) );
+					m2LmLmBar.emplace_back( cos(2*(Phi - mLm.second)) );
+				} else if ( ( Pid == -3122 ) and (mLm.first == -3122) ) {
+					m1LmBarLmBar.emplace_back( cos(Phi - mLm.second) );
+					m2LmBarLmBar.emplace_back( cos(2*(Phi - mLm.second)) );
+				}
+			}
+		}
+	}
+
+
+	mixed_[centBin]->push_back(evtLm);
+	if ( mixed_[centBin]->size() > Nmix_ ) {
+		mixed_[centBin]->erase(mixed_[centBin]->begin());
 	}
 
 	trV->Fill();
