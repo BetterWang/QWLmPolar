@@ -39,7 +39,7 @@ QWLmPolar : public edm::EDAnalyzer {
 		edm::InputTag		pPhiCM_;
 		edm::InputTag		nPhiCM_;
 		std::vector<int>	mixNoffBins_;
-		int			Nmix_;
+		unsigned int		Nmix_;
 
 		TTree*			trV;
 		std::vector<double>	v1LmLm;
@@ -68,7 +68,7 @@ QWLmPolar::QWLmPolar(const edm::ParameterSet& iConfig):
 	pPhiCM_( iConfig.getUntrackedParameter<edm::InputTag>("pPhiCM") ),
 	nPhiCM_( iConfig.getUntrackedParameter<edm::InputTag>("nPhiCM") ),
 	mixNoffBins_( iConfig.getUntrackedParameter<std::vector<int>>("mixNoffBins") ),
-	Nmix_( iConfig.getUntrackedParameter<int>("Nmix") )
+	Nmix_( iConfig.getUntrackedParameter<unsigned int>("Nmix") )
 {
 	consumes<int>(centralityTag_);
 	consumes<std::vector<double>>(pdgId_);
@@ -94,7 +94,7 @@ QWLmPolar::QWLmPolar(const edm::ParameterSet& iConfig):
 	trV->Branch("m2LmBarLmBar",	&m2LmBarLmBar);
 	trV->Branch("m2LmLmBar",	&m2LmLmBar);
 
-	for ( int i = 0; i < mixNoffBins_.size(); i++ ) {
+	for ( unsigned int i = 0; i < mixNoffBins_.size(); i++ ) {
 		mixed_.push_back(new VVPidPhi);
 	}
 }
